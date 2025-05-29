@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Food Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3498db;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">AI Food Analyzer</h1>
+        
+        <!-- Main Upload Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Upload Food Image</label>
+                <div class="flex items-center justify-center w-full">
+                    <label class="flex flex-col w-full h-32 border-4 border-dashed hover:bg-gray-100 hover:border-blue-300 rounded-lg">
+                        <div class="flex flex-col items-center justify-center pt-7">
+                            <i class="bi bi-upload text-3xl text-gray-400"></i>
+                            <p class="pt-1 text-sm tracking-wider text-gray-400 group-hover:text-gray-600">
+                                Select a photo</p>
+                        </div>
+                        <input type="file" id="imageInput" class="opacity-0" accept="image/*">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Health Conditions -->
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Health Conditions</label>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="diabetic" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2">Diabetic</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="hypertensive" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2">Hypertensive</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="prediabetic" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2">Pre-diabetic</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Medical History Upload -->
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Medical History (Optional)</label>
+                <input type="file" id="pdfInput" accept=".pdf" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100">
+            </div>
+
+            <button id="analyzeBtn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                Analyze Food
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden bg-white rounded-lg shadow-lg p-6">
+            <div id="loader" class="hidden flex justify-center items-center">
+                <div class="loader"></div>
+            </div>
+            <div id="results" class="space-y-4">
+                <div class="border-b pb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Food Classification</h3>
+                    <p id="foodName" class="text-xl font-bold text-blue-600"></p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Nutritional Analysis</h3>
+                    <div id="nutritionInfo" class="mt-2 text-gray-600"></div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Health Recommendations</h3>
+                    <div id="recommendations" class="mt-2 text-gray-600"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userId = localStorage.getItem('userId') || `user-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('userId', userId);
+        const appSlug = 'food-analyzer-123456';
+
+        async function analyzeFood(imageFile, healthConditions, medicalHistory) {
+            const loader = document.getElementById('loader');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            try {
+                loader.classList.remove('hidden');
+                resultsSection.classList.remove('hidden');
+                
+                // Upload image
+                const formData = new FormData();
+                formData.append('file', imageFile);
+                formData.append('userId', userId);
+                formData.append('appSlug', appSlug);
+
+                const uploadResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/storage/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer seU5JUUU07PmpJjMz9dcyfO29at2'
+                    },
+                    body: formData
+                });
+
+                const uploadData = await uploadResponse.json();
+
+                // Analyze image with AI
+                const aiResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer seU5JUUU07PmpJjMz9dcyfO29at2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: "user",
+                                content: [
+                                    {
+                                        type: "text",
+                                        text: `Analyze this food image and provide: 1. The name of the food 2. Detailed nutritional information 3. Health recommendations considering these conditions: ${healthConditions.join(', ')}`
+                                    },
+                                    {
+                                        type: "image_url",
+                                        image_url: {
+                                            url: uploadData.url
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+                });
+
+                const aiData = await aiResponse.json();
+
+                // Parse AI response and update UI
+                const response = aiData.message;
+                const sections = response.split('\n\n');
+                
+                document.getElementById('foodName').textContent = sections[0].replace('1. ', '');
+                document.getElementById('nutritionInfo').innerHTML = sections[1].replace('2. ', '').split('\n').join('<br>');
+                document.getElementById('recommendations').innerHTML = sections[2].replace('3. ', '').split('\n').join('<br>');
+
+                // Store analysis in database
+                await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer seU5JUUU07PmpJjMz9dcyfO29at2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug: appSlug,
+                        action: 'create',
+                        collection: 'food_analyses',
+                        data: {
+                            userId,
+                            imageUrl: uploadData.url,
+                            healthConditions,
+                            analysis: response,
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during analysis. Please try again.');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            const imageFile = document.getElementById('imageInput').files[0];
+            const pdfFile = document.getElementById('pdfInput').files[0];
+            const healthConditions = [
+                'diabetic',
+                'hypertensive',
+                'prediabetic'
+            ].filter(condition => document.getElementById(condition).checked);
+
+            if (!imageFile) {
+                alert('Please select an image to analyze');
+                return;
+            }
+
+            await analyzeFood(imageFile, healthConditions, pdfFile);
+        });
+
+        // Preview image when selected
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('img');
+                    preview.src = e.target.result;
+                    preview.classList.add('max-h-32', 'mx-auto', 'mt-2');
+                    
+                    const container = this.parentElement.parentElement;
+                    const existingPreview = container.querySelector('img');
+                    if (existingPreview) {
+                        container.removeChild(existingPreview);
+                    }
+                    container.appendChild(preview);
+                }.bind(this);
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
